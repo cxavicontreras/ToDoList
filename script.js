@@ -1,30 +1,25 @@
 const form = document.getElementById("tareaForm");
+const inputTarea = document.getElementById("nueva-tarea");
 const lista = document.getElementById("listaTareas");
 const totalSpan = document.getElementById("total");
 const borrarBtn = document.getElementById("borrarTodo");
 const modoBtn = document.getElementById("modoBtn");
 
-let tareas = [];
+let tareas = JSON.parse(localStorage.getItem("tareas")) || [];
 
-// Agregar tarea
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const tareaInput = document.getElementById("nueva-tarea").value.trim();
-  if (tareaInput === "") return;
+// Guardar tareas en el navegador
+function guardarTareas() {
+  localStorage.setItem("tareas", JSON.stringify(tareas));
+}
 
-  tareas.push({ nombre: tareaInput, completada: false });
-  actualizarTareas();
-  form.reset();
-});
-
-// Actualizar lista y total
+// Mostrar y actualizar las tareas
 function actualizarTareas() {
   lista.innerHTML = "";
+
   tareas.forEach((tarea, index) => {
     const li = document.createElement("li");
     li.textContent = tarea.nombre;
 
-    // Estilo si está completada
     if (tarea.completada) {
       li.style.textDecoration = "line-through";
       li.style.opacity = "0.6";
@@ -32,7 +27,14 @@ function actualizarTareas() {
 
     // Botón completar
     const btnCompletar = document.createElement("button");
+
+    btnCompletar.type = "button";
     btnCompletar.textContent = "✅";
+    btnCompletar.setAttribute(
+      "aria-label",
+      tarea.completada ? "Marcar como pendiente" : "Completar tarea"
+    );
+
     btnCompletar.addEventListener("click", () => {
       tareas[index].completada = !tareas[index].completada;
       actualizarTareas();
@@ -40,7 +42,11 @@ function actualizarTareas() {
 
     // Botón borrar
     const btnBorrar = document.createElement("button");
+
+    btnBorrar.type = "button";
     btnBorrar.textContent = "🗑️";
+    btnBorrar.setAttribute("aria-label", "Eliminar tarea");
+
     btnBorrar.addEventListener("click", () => {
       tareas.splice(index, 1);
       actualizarTareas();
@@ -53,7 +59,28 @@ function actualizarTareas() {
   });
 
   totalSpan.textContent = tareas.length;
+
+  // Se guarda después de cualquier modificación
+  guardarTareas();
 }
+
+// Agregar tarea
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const nombreTarea = inputTarea.value.trim();
+
+  if (nombreTarea === "") return;
+
+  tareas.push({
+    nombre: nombreTarea,
+    completada: false,
+  });
+
+  actualizarTareas();
+  form.reset();
+  inputTarea.focus();
+});
 
 // Borrar todas las tareas
 borrarBtn.addEventListener("click", () => {
@@ -61,8 +88,16 @@ borrarBtn.addEventListener("click", () => {
   actualizarTareas();
 });
 
-// Modo oscuro / claro
+// Cambiar modo oscuro/claro
 modoBtn.addEventListener("click", () => {
   document.body.classList.toggle("claro");
-  modoBtn.textContent = document.body.classList.contains("claro") ? "☀️ Modo claro" : "🌙 Modo oscuro";
+
+  const modoClaro = document.body.classList.contains("claro");
+
+  modoBtn.textContent = modoClaro
+    ? "🌙 Modo oscuro"
+    : "☀️ Modo claro";
 });
+
+// Mostrar las tareas guardadas al iniciar
+actualizarTareas();
